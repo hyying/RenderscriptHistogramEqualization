@@ -1,6 +1,7 @@
 package com.example.q.renderscriptexample;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,7 +13,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.q.renderscriptexample.utils.RenderScriptImageEdit;
+import com.example.q.renderscriptexample.utils.UriUtil;
+import com.example.q.renderscriptexample.utils.Util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class EditPictureActivity extends AppCompatActivity {
@@ -32,13 +36,17 @@ public class EditPictureActivity extends AppCompatActivity {
         if (getIntent().hasExtra(BITMAP_URI_EXTRA)) {
             Uri imageUri = Uri.parse(getIntent().getStringExtra(BITMAP_URI_EXTRA));
             try {
-                image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-            } catch (IOException e) {
+//                image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+//                Util.bmpToSmall(image, 2 * 1024 * 1024);
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = 8;
+                String path = UriUtil.getImageAbsolutePath(this, imageUri);
+                image = BitmapFactory.decodeFile(path, options);
+            } catch (Exception e) {
                 e.printStackTrace();
                 finish();
             }
-        }
-        else {
+        } else {
             finish();
         }
         final ImageView iv_original_image = (ImageView) findViewById(R.id.original_image);
@@ -53,8 +61,7 @@ public class EditPictureActivity extends AppCompatActivity {
     private void setFAB(Boolean blur) {
         if (blur) {
             mFloatingActionButton.setVisibility(View.GONE);
-        }
-        else {
+        } else {
             mFloatingActionButton.setOnClickListener(
                     new View.OnClickListener() {
                         @Override
@@ -68,7 +75,7 @@ public class EditPictureActivity extends AppCompatActivity {
     }
 
     private void setEditedImageView(long time) {
-        String text = getString(R.string.compute_time) + time + "ms for "+image.getWidth()+"x"+image.getHeight()+" pixels";
+        String text = getString(R.string.compute_time) + time + "ms for " + image.getWidth() + "x" + image.getHeight() + " pixels";
         mTextView.setText(text);
         mImageView.setImageBitmap(editedImage);
         setFAB(false);
@@ -88,7 +95,7 @@ public class EditPictureActivity extends AppCompatActivity {
             long begin = System.currentTimeMillis();
             editedImage = RenderScriptImageEdit.histogramEqualization(image, EditPictureActivity.this);
             long end = System.currentTimeMillis();
-            long time = end-begin;
+            long time = end - begin;
             return time;
         }
 
@@ -104,7 +111,7 @@ public class EditPictureActivity extends AppCompatActivity {
             long begin = System.currentTimeMillis();
             editedImage = RenderScriptImageEdit.blurBitmap(editedImage, 25.0f, EditPictureActivity.this);
             long end = System.currentTimeMillis();
-            long time = end-begin;
+            long time = end - begin;
             return time;
         }
 
